@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="welcome-banner">
+        <h2>Welcome back, {{ name }}!</h2>
+        <p>@{{ username }}</p>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="card friends-card">
+            <h3><i class="fas fa-users"></i> Your Friends</h3>
+            {% if friends %}
+            <ul class="friends-list">
+                {% for friend in friends %}
+                <li>
+                    <span class="friend-name">{{ friend[1] }}</span>
+                    <a href="{{ url_for('get_path', target_id=friend[0]) }}" class="btn-path" data-user-id="{{ friend[0] }}">View Path</a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>You don't have any friends yet. <a href="{{ url_for('friends') }}">Add some!</a></p>
+            {% endif %}
+        </div>
+
+        <div class="card suggestions-card">
+            <h3><i class="fas fa-user-plus"></i> Friend Suggestions</h3>
+            {% if suggested_friends %}
+            <ul class="suggestions-list">
+                {% for friend in suggested_friends %}
+                <li>
+                    <span class="friend-name">{{ friend[1] }}</span>
+                    <a href="{{ url_for('add_friend', friend_id=friend[0]) }}" class="btn-add">Add Friend</a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>No suggestions at this time.</p>
+            {% endif %}
+        </div>
+
+        <div class="card path-result-card" id="pathResult" style="display: none;">
+            <h3><i class="fas fa-route"></i> Connection Path</h3>
+            <div id="pathDetails"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const pathLinks = document.querySelectorAll('.btn-path');
+    
+    pathLinks.forEach(link => {
+        link.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const userId = this.getAttribute('data-user-id');
+            
+            try {
+                const response = await fetch(this.href);
+                const data = await response.json();
+                
+                if (data.error) {
+                    document.getElementById('pathDetails').innerHTML = `<p class="error">${data.error}</p>`;
+                } else {
+                    let pathHTML = '<ol class="path-list">';
+                    data.path.forEach(user => {
+                        pathHTML += `<li>${user.name}</li>`;
+                    });
+                    pathHTML += '</ol>';
+                    document.getElementById('pathDetails').innerHTML = pathHTML;
+                }
+                
+                document.getElementById('pathResult').style.display = 'block';
+                window.location.hash = '#pathResult';
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

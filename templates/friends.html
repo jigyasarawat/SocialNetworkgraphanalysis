@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="friends-container">
+    <h2>Your Friends</h2>
+    
+    {% if friends %}
+    <div class="friends-list">
+        {% for friend in friends %}
+        <div class="friend-card">
+            <div class="friend-avatar">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="friend-info">
+                <h3>{{ friend[1] }}</h3>
+                <div class="friend-actions">
+                    <a href="{{ url_for('get_path', target_id=friend[0]) }}" class="btn-path" data-user-id="{{ friend[0] }}">View Path</a>
+                    <a href="{{ url_for('remove_friend', friend_id=friend[0]) }}" class="btn-remove">Remove</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="no-friends">You don't have any friends yet. Add some below!</p>
+    {% endif %}
+
+    <h2>People You May Know</h2>
+    {% if non_friends %}
+    <div class="suggestions-grid">
+        {% for user in non_friends %}
+        <div class="suggestion-card">
+            <div class="suggestion-avatar">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="suggestion-info">
+                <h3>{{ user[1] }}</h3>
+                <a href="{{ url_for('add_friend', friend_id=user[0]) }}" class="btn-add">Add Friend</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No suggestions available.</p>
+    {% endif %}
+</div>
+
+<div class="path-modal" id="pathModal" style="display: none;">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h3>Connection Path</h3>
+        <div id="modalPathDetails"></div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const pathLinks = document.querySelectorAll('.btn-path');
+    const modal = document.getElementById('pathModal');
+    const closeModal = document.querySelector('.close-modal');
+    const modalPathDetails = document.getElementById('modalPathDetails');
+    
+    pathLinks.forEach(link => {
+        link.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const userId = this.getAttribute('data-user-id');
+            
+            try {
+                const response = await fetch(this.href);
+                const data = await response.json();
+                
+                if (data.error) {
+                    modalPathDetails.innerHTML = `<p class="error">${data.error}</p>`;
+                } else {
+                    let pathHTML = '<ol class="path-list">';
+                    data.path.forEach(user => {
+                        pathHTML += `<li>${user.name}</li>`;
+                    });
+                    pathHTML += '</ol>';
+                    modalPathDetails.innerHTML = pathHTML;
+                }
+                
+                modal.style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    });
+    
+    closeModal.addEventListener('click', function() {
+        modal.style.display = 'none';
+    });
+    
+    window.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

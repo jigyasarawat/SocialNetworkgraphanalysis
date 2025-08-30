@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="analytics-container">
+    <h2>Network Analytics</h2>
+    
+    <div class="analytics-grid">
+        <div class="analytics-card">
+            <h3><i class="fas fa-project-diagram"></i> Find Connection Path</h3>
+            <form id="pathForm">
+                <div class="form-group">
+                    <label for="targetUser">To User:</label>
+                    <select id="targetUser" required>
+                        <option value="">Select a user</option>
+                        {% for user in other_users %}
+                        <option value="{{ user[0] }}">{{ user[1] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary">Find Path</button>
+            </form>
+            <div id="pathResult" class="path-result">
+                <!-- Results will be displayed here -->
+            </div>
+        </div>
+
+        <div class="analytics-card">
+            <h3><i class="fas fa-network-wired"></i> Community Detection</h3>
+            <div class="communities-list">
+                {% if communities %}
+                    {% for community in communities %}
+                    <div class="community">
+                        <h4>Community {{ loop.index }}</h4>
+                        <ul>
+                            {% for member in community %}
+                            <li>{{ member[1] }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p>No communities detected.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const pathForm = document.getElementById('pathForm');
+    const pathResult = document.getElementById('pathResult');
+    
+    pathForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const targetUserId = document.getElementById('targetUser').value;
+        
+        if (!targetUserId) return;
+        
+        try {
+            const response = await fetch(`/get_path/${targetUserId}`);
+            const data = await response.json();
+            
+            if (data.error) {
+                pathResult.innerHTML = `<p class="error">${data.error}</p>`;
+            } else {
+                let pathHTML = '<h4>Shortest Connection Path:</h4><ol class="path-list">';
+                data.path.forEach(user => {
+                    pathHTML += `<li>${user.name}</li>`;
+                });
+                pathHTML += '</ol>';
+                pathResult.innerHTML = pathHTML;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            pathResult.innerHTML = `<p class="error">An error occurred while fetching the path.</p>`;
+        }
+    });
+});
+</script>
+{% endblock %}
